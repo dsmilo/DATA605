@@ -1,0 +1,94 @@
+---
+title: "DATA 605 Assignment 2: Matrix Factorization"
+author: "Dan Smilowitz"
+date: "September 6, 2016"
+output: 
+  html_document: 
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA)
+```
+
+
+## Problem Set 1
+
+### General Case
+In general, for matrices $A$ and $B$,
+$$AB \neq BA$$
+
+Substituting in $B = A^T$ gives 
+$$AA^T \neq A^TA$$
+
+
+### Special Case
+In the case where $A = B$, this equation becomes
+$$AB = BA \longrightarrow AA = AA$$
+
+$AA = AA$ is necessarily true; in this case,  $AB = BA$ is true.
+
+Thus, the only situation under which $A^TA = AA^T$ is one where
+$$A^T = A$$
+
+This is true, by definition, for all **symmetic matrices**.
+
+
+## Problem Set 2
+
+The function below factorizes matrices into LU or LDU:
+
+```{r factorize}
+factorize <- function(A, LDU = FALSE) {
+  if (nrow(A) == ncol(A)) {
+    square <- TRUE
+  } else {square <- FALSE}
+  
+  if (square == TRUE) {
+    size <- nrow(A)
+    L <- diag(size)
+    U <- A
+    
+    for (i in 1:(size - 1)) {
+      for (j in (i + 1):size) {
+        # get multipliers
+        L[j, i] <- U[j, i] / U[i, i]
+        # pivots and multiplication
+        U[j, ]  <- U[j, ] - L[j, i] * U[i, ]
+      }
+    }
+    
+    #results
+    if (LDU == TRUE) {
+      D <- diag(size)
+      for (k in 1:size) {
+        D[k, k] <- U[k, k]
+        U[k, ] <- U[k, ] / D[k, k]
+      }
+      LU <- list("L" = L, "D" = D, "U'" = U)
+    } else {
+      LU <- list("L" = L, "U" = U)
+    }
+  } else {LU <- "Error: matrix is not square"}
+  LU
+}
+```
+
+### Testing
+
+Testing with the example matrix $A$ from the lecture notes
+
+$$A = \left[ \begin{array}{cc}1 & 1 & 2 \\2 & 1 & 0 \\3 & 1 & 1 \end{array} \right]$$
+
+```{r test-LU}
+A <- matrix(c(1, 2, 3, 1, 1, 1, 2, 0, 1), nrow=3)
+factorize(A)
+```
+
+$$A = LU = \left[ \begin{array}{cc}1 & 0 & 0 \\2 & 1 & 0 \\3 & 2 & 1 \end{array} \right] \left[ \begin{array}{cc}1 & 1 & 2 \\0 & -1 & -4 \\0 & 0 & 3 \end{array} \right]$$
+
+```{r test-LDU}
+factorize(A, LDU = TRUE)
+```
+
+$$A = LDU' = \left[ \begin{array}{cc}1 & 0 & 0 \\2 & 1 & 0 \\3 & 2 & 1 \end{array} \right] \left[ \begin{array}{cc}1 & 0 & 0 \\0 & -1 & 0 \\0 & 0 & 3 \end{array} \right] \left[ \begin{array}{cc}1 & 1 & 2 \\0 & 1 & 4 \\0 & 0 & 1 \end{array} \right]$$
