@@ -1,0 +1,79 @@
+---
+title: "DATA 605 Assignment 3: Eigenvalues & Eigenvectors"
+author: "Dan Smilowitz"
+date: "September 13, 2016"
+output: 
+  html_document: 
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA)
+```
+
+
+## Problem Set 1
+
+### Problem 1
+$$A = \left[ \begin{array}{cccc}1 & 2 & 3 & 4 \\-1 & 0 & 1 & 3 \\0 & 1 & -2 & 1 \\5 & 4 & -2 & -3 \end{array} \right]$$
+
+$A$ is a square ($4 \times 4$) matrix.  Visible inspection shows that the rows of $A$ are not linear combinations of one another.  As such, it is invertible, and **its rank is 4**.
+
+
+### Problem 2
+For a rectangular *m $\times$ n* matrix, the largest possible rank is the smaller of the two dimensions.  In the case where *m $\gt$ n*, **the largest possible rank is _n_**.
+
+A non-zero matrix has a minimum of one entry, meaning it has a minimum of one pivot.  As the rank is equivalent to the number of pivots, **the minimum possible rank is 1**.
+
+
+### Problem 3
+$$B = \left[ \begin{array}{ccc}1 & 2 & 1 \\3 & 6 & 3 \\2 & 4 & 2 \end{array} \right]$$
+
+The second and third rows of $B$ are linear combinations of the first row.  As such, **the rank of $B$ is 1**.
+
+
+## Problem Set 2
+$$A = \left[ \begin{array}{cc}1 & 2 & 3 \\0 & 4 & 5 \\0 & 0 & 6 \end{array} \right]$$
+
+### Eigenvalues
+$$A - \lambda I = \left[ \begin{array}{cc}1 & 2 & 3 \\0 & 4 & 5 \\0 & 0 & 6 \end{array} \right] - \lambda \left[ \begin{array}{ccc}1 & 0 & 0 \\0 & 1 & 0 \\0 & 0 & 1 \end{array} \right] = \left[ \begin{array}{cc}1 - \lambda & 2 & 3 \\0 & 4 - \lambda & 5 \\0 & 0 & 6 - \lambda \end{array} \right]$$
+
+Moving down the first column for simplicity,
+
+$$\begin{split}
+det \left( \left[ \begin{array}{ccc}1 - \lambda & 2 & 3 \\0 & 4 - \lambda & 5 \\0 & 0 & 6 - \lambda \end{array} \right] \right) ={}& (1 - \lambda) \times det \left( \left[ \begin{array}{cc}4 - \lambda & 5 \\0 & 6 - \lambda \end{array} \right] \right) \\
+& - \ 0 \times det \left( \left[ \begin{array}{cc}2 & 3 \\0 & 6 - \lambda \end{array} \right] \right) \\
+& + \ 0 \times det \left( \left[ \begin{array}{cc}2 & 3 \\4 - \lambda & 5 \end{array} \right] \right) \\
+= & \left( 1 - \lambda \right) \times \Big( \left( 4 - \lambda \right) \times \left( 6 - \lambda \right) -  5 \times 0 \Big) \\
+= & \left( 1 - \lambda \right) \times \left( 4 - \lambda \right) \times \left( 6 - \lambda \right)
+\end{split}$$
+
+Setting this determinant equal to zero, the roots of the equation, and therefore the eigenvalues, are apparent: $\mathbf{\lambda_1 = 1; \ \lambda_2 = 4; \ \lambda_3 = 6}$
+
+### Eigenvectors
+
+##### $\lambda_1 = 1$
+Substituting in the first eigenvalue, 
+$$A - \lambda_1 I = \left[ \begin{array}{ccc}0 & 2 & 3 \\0 & 3 & 5 \\0 & 0 & 5 \end{array} \right] = \left[ \begin{array}{c}0 \\0 \\0 \end{array} \right]$$
+Solving the bottom row gives $v_{1,3} = 0$.  Inserting this into the second row gives $v_{1,2} = 0$.  Substituting both of these into the first row gives the identity, $0 = 0$ -- this means that $v_{1,1}$ can take any value.  A value of 1 is used to create a unit vector.
+$$v_1 = \left[ \begin{array}{c}1 \\0 \\0 \end{array} \right]$$
+
+##### $\lambda_2 = 4$
+Substituting in the second eigenvalue, 
+$$A - \lambda_2 I = \left[ \begin{array}{ccc}-3 & 2 & 3 \\0 & 0 & 5 \\0 & 0 & 2 \end{array} \right] = \left[ \begin{array}{c}0 \\0 \\0 \end{array} \right]$$
+Again, solving the bottom row gives $v_{2,3} = 0$.  Inserting this into the second row gives $0 = 0$ -- as before, any value can be used; 1 is used so that $v_{2,2} = 1$.  Substituting both of these into the first row gives $-3 v_{2,1} + 2 \times 1 + 3 \times 0 = 0$ --- solving this gives $v_{2,1} = \frac{2}{3}$.  Converting this to a unit vactor gives
+$$v_2 = \left[ \begin{array}{c}0.5547 \\0.8321 \\0 \end{array} \right]$$
+
+##### $\lambda_3 = 6$
+Substituting in the second eigenvalue, 
+$$A - \lambda_2 I = \left[ \begin{array}{ccc}-5 & 2 & 3 \\0 & -2 & 5 \\0 & 0 & 0 \end{array} \right] = \left[ \begin{array}{c}0 \\0 \\0 \end{array} \right]$$
+The bottom row gives, the identity -- as before, a value of 1 is used; $v_{3,3} = 1$.  Substituting this into the second equation gives $v_{3,2} = \frac{5}{2}$.  Substituting these two values into the first row gives $-5 v_{3,1} + 2 \times \frac{5}{2} + 3 \times 1$ --- solving this gives $v_{3,1} = \frac{8}{5}$.  Converting this to a unit vector,
+$$v_3 = \left[ \begin{array}{c}0.5108 \\0.7982 \\0.3193 \end{array} \right]$$
+
+### Validation
+Using the built-in `eigen` function, the calculated results can be verified:
+
+```{r eigen}
+A <- matrix(c(1, 2, 3, 0, 4, 5, 0, 0, 6), nrow = 3, byrow = TRUE)
+eigen(A)
+```

@@ -1,0 +1,92 @@
+---
+title: 'DATA 605 Assignment 5: Least Squares'
+author: "Dan Smilowitz"
+date: "September 20, 2016"
+output: 
+  html_document: 
+    highlight: tango
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA)
+```
+
+
+## Problem Set 1
+
+$$A = \left[ \begin{array}{cc}1 & 0 \\1 & 1 \\1 & 3 \\1 & 4 \end{array} \right]\ ; \ \ \ b = \left[ \begin{array}{c}0 \\8 \\8 \\20 \end{array} \right]$$
+
+```{r AtA-Atb}
+A = matrix(c(1, 1, 1, 1, 0, 1, 3, 4), ncol = 2, byrow = FALSE)
+b = matrix(c(0, 8, 8, 20), ncol = 1)
+
+(AtA <- t(A) %*% A)
+(Atb <- t(A) %*% b)
+```
+
+$$A^TA = \left[ \begin{array}{cc}4 & 8 \\8 & 26 \end{array} \right]\ ; \ \ \ A^Tb = \left[ \begin{array}{c}36 \\112 \end{array} \right]$$
+
+```{r x-hat}
+(x_hat <- solve(AtA, Atb))
+```
+
+$$\hat{x} = \left[ \begin{array}{c}1 \\4 \end{array} \right]$$
+
+```{r e}
+(e <- b - A %*% x_hat)
+```
+
+$$e = \left[ \begin{array}{c}-1 \\3 \\-5 \\3 \end{array} \right]\ ; \ \ \ ||e||^2 = `r sum(e^2)`$$
+
+```{r p}
+p <- matrix(c(1, 5, 13, 17), ncol = 1)
+Atp <- t(A) %*% p
+solve(AtA, Atp)
+```
+
+$$\hat{x_p} = \left[ \begin{array}{c}1 \\4 \end{array} \right]$$
+
+```{r e-b-p}
+identical(e, b - p)
+```
+
+```{r orthogonal}
+sum(e * p)
+for (i in 1:ncol(A)) {print(sum(e * A[, i]))}
+```
+
+The dot products of $e$ with $p$ and with the columns of $A$ yield zero; this shows that the vectors are orthogonal.
+
+
+
+## Problem Set 2
+
+The function below returns the inverse of a full-rank square matrix using co-factors.
+
+```{r car-data}
+# read in data and store in A & b
+car_data <- read.table('https://raw.githubusercontent.com/dsmilo/DATA605/master/data/auto-mpg.data',
+                       col.names = c("x1", "x2", "x3", "x4", "mpg"))
+A <- as.matrix(car_data[, 1:4])
+b <- as.matrix(car_data[, 5])
+
+# find AtA & Atb
+AtA <- t(A) %*% A
+Atb <- t(A) %*% b
+
+# find least squares solution
+x_hat <- solve(AtA, Atb)
+
+# find the error
+e <- b - A %*% x_hat
+e2 <- sum(e^2)
+```
+
+The solution vector returned by this script is
+$$\hat{x} = \left[ \begin{array}{c}-0.030 \\0.157 \\-0.006 \\1.997 \end{array} \right]$$
+
+That is to say that the least-squares estimate for $mpg$ is
+$$\widehat{mpg} = -0.030 x_1 + 0.157 x_2 -0.006 x_3 + 1.997 x_4$$
+
+The fitting error of this estimate, $||e||^2$, is `r as.character(round(e2, 2))`.

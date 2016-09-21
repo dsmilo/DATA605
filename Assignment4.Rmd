@@ -1,0 +1,93 @@
+---
+title: "DATA 605 Assignment 4: Matrix Inverse & SVD"
+author: "Dan Smilowitz"
+date: "September 20, 2016"
+output: 
+  html_document: 
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA)
+```
+
+
+## Problem Set 1
+
+$$A = \left[ \begin{array}{ccc}1 & 2 & 3 \\-1 & 0 & 4 \end{array} \right]$$
+
+```{r x-and-y}
+A <- matrix(c(1, 2, 3, -1, 0, 4), nrow = 2, byrow = TRUE)
+# compute X & Y
+(X <- A %*% t(A))
+(Y <- t(A) %*% A)
+# eigenvalues
+(lambda_x <- eigen(X)$values)
+(lambda_y <- eigen(Y)$values)
+# eigenvectors
+(s_x <- eigen(X)$vectors)
+(s_y <- eigen(Y)$vectors)
+
+# perform SVD of A
+(svd_a <- svd(A))
+```
+
+Comparing the results, it can be seen that $U$ contains the eigenvalues of $X$, that is
+$$U = S_X = \left[ \begin{array}{cc}-0.6576 & -0.7534 \\-0.7534 & 0.6576 \end{array} \right]$$
+
+Additionally, $V$ contains the first two eigenvectors of $Y$.  
+$$V = S_{Y_{1:2}} = \left[ \begin{array}{ccc}0.0186 & -0.6728 \\-0.2550 & -0.7185 \\-0.9668 & 0.1766 \end{array} \right]$$
+
+In both cases above, the first columns, corresponding to the first eigenvalues of $X$ and $Y$, are shown in the opposite direction in $U$ and $V$.  These vectors are equivalent, as they simply represent scalar multiplication and do not affect orthonormality.
+
+Finally, the non-zero eigenvalues of $V$ are equivalent to the eigenvalues of $U$ -- these are equivalent to the square of the singular values $d$:
+$$\Lambda_X = \Lambda_{Y_{1:2}} = \left[ \begin{array}{cc}26.6018 & 0 \\0 & 4.3982 \end{array} \right] = \Sigma^2$$
+Where $$\Sigma = \left[ \begin{array}{cc}5.1577 & 0 \\0 & 2.0972 \end{array} \right]$$
+
+
+
+## Problem Set 2
+
+The function below returns the inverse of a full-rank square matrix using co-factors.
+
+```{r myinverse}
+myinverse <- function(A) {
+  # check if matrix is full-rank and square
+  if (nrow(A) == ncol(A) & Matrix::rankMatrix(A)[1] == nrow(A)) {
+    fr_square <- TRUE
+  } else {fr_square <- FALSE}
+  
+  if (fr_square == TRUE) {
+    size <- nrow(A)
+    C <- matrix(nrow = size, ncol = size)
+    for (i in 1:size) {
+      for (j in 1:size) {
+        # M is A with row i & column j excluded
+        M <- A[-i, -j]
+        C[i, j] <- (-1)^(i + j) * det(M)
+      }
+    }
+    # return inverse of T divided by det(A)
+    B <- t(C) / det(A)
+  } else {B <- "Matrix is not invertible"}
+  B
+}
+```
+
+### Testing
+
+Testing with the example matrix $A$ from [Assignment 2](https://rpubs.com/dsmilo/DATA605-Assignment2)
+
+$$A = \left[ \begin{array}{cc}1 & 1 & 2 \\2 & 1 & 0 \\3 & 1 & 1 \end{array} \right]$$
+
+```{r test-inverse}
+A <- matrix(c(1, 2, 3, 1, 1, 1, 2, 0, 1), nrow=3)
+(B <- myinverse(A))
+```
+
+The returned results are tested to show that $A \times B = I$ and that the matrix calculated with `myinverse` is equal to the inverse returned by the `solve` function.
+
+```{r test-results}
+round(A %*% B, 14)
+identical(round(B, 14), round(solve(A), 14))
+```
