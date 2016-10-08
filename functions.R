@@ -111,3 +111,58 @@ myinverse <- function(A) {
   } else {B <- "Matrix is not invertible"}
   B
 }
+
+
+
+## Assignment 6 ####
+## Birthday Problem
+
+same_bday <- function(n) {
+  unique <- prod(364:(364 - n + 2)) / (365 ^ (n - 1))
+  ifelse(n > 364, 1, 1 - unique)
+}
+
+## probability of words in text file
+word_prob <- function(flnm, ranked = FALSE, printAllWords = FALSE, returnTable = FALSE) {
+  library(stringr)
+  # read in file
+  body <- read.delim(flnm, header = FALSE, stringsAsFactors = FALSE)
+  # collapse and convert to lowercase
+  body <- str_to_lower(paste(body, collapse = ' '))
+  # remove anything that isnt a space or lowercase letter
+  body <- str_replace_all(body, '[^[:lower:]^ ]', '')
+  # convert to vector
+  word_vec <- str_split(body, ' ')[[1]]
+  # get count of words and convert to probability
+  word_table <- as.data.frame(table(word_vec)[-1], stringsAsFactors = FALSE) #remove count of spaces
+  suppressPackageStartupMessages(library(dplyr))
+  word_table <- word_table %>% transmute(Word = word_vec, Probability = Freq / sum(Freq))
+  if(ranked) {
+    word_table <- arrange(word_table, desc(Probability))
+  }
+  print(head(word_table, ifelse(printAllWords, nrow(word_table), 10)))
+  if(returnTable){return(word_table)}
+}
+
+## probability of a phrase in text file
+phrase_prob <- function(flnm, word1, word2) {
+  # adapt previous function
+  library(stringr)
+  body <- read.delim(flnm, header = FALSE, stringsAsFactors = FALSE)
+  body <- str_to_lower(paste(body, collapse = ' '))
+  body <- str_replace_all(body, '[^[:lower:]^ ]', '')
+  word_vec <- str_split(body, ' ')[[1]]
+  word_table <- as.data.frame(table(word_vec)[-1], stringsAsFactors = FALSE)
+  suppressPackageStartupMessages(library(dplyr))
+  word_table <- word_table %>% transmute(Word = word_vec, Probability = Freq / sum(Freq))
+  # get individual word probabilities
+  prob_1 <- word_table[word_table$Word == word1, 2]
+  prob_2 <- word_table[word_table$Word == word2, 2]
+  # find count of words appearing together
+  phrase_count <- str_count(body, paste(word1, word2)) + str_count(body, paste(word2, word1))
+  # divide by the number of possible phrases -- 1 fewer than the number of words
+  prob_phrase <- phrase_count[1] / (length(word_vec) - 1)
+  probs <- data.frame(Term = c(word1, word2, paste0(paste(word1, word2), ";", paste(word2, word1))), 
+                      Probability = c(prob_1, prob_2, prob_phrase), stringsAsFactors = FALSE)
+  probs
+}

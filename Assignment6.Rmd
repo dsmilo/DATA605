@@ -1,0 +1,115 @@
+---
+title: 'DATA 605 Assignment 6: Random Variables'
+author: "Dan Smilowitz"
+date: "October 7, 2016"
+output: 
+  html_document: 
+    highlight: tango
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA)
+```
+
+
+## Problem Set 1
+
+### Two Dice
+For each roll of the die, there are 6 possibilities, so
+$$N_{3rolls} = 6 \times 6 \times 6 = 216$$
+
+### Sum of 3
+There are two possibilities for two rolls totalling 3: 1 then 2; and 2 then 1.  The total probability is 
+
+$$\begin{align}
+P(sum = 3) &= P(1, 2) + P(2, 1) \\
+           &= P(1) \times P(2) + P(2) \times P(1) \\
+           &= \frac{1}{6} \times \frac{1}{6} + \frac{1}{6} \times \frac{1}{6} \\
+           &= \frac{2}{36} = \frac{1}{18} = `r round(1/18, 4)`
+\end{align}$$
+
+### Shared Birthday
+The event that at least two people share a birthday is the complement of the event that no person in the room shares a birthday with anyone else in the room.  Imagining people are asked their birthdays sequentially, the second person has a $\frac{364}{365}$ chance of having a birthday different from the first person.  The third person then has a $\frac{363}{365}$ chance of not sharing a birthday with either of the first two people.  This continues on through the 25th person, who will have a $\frac{341}{365}$ chance of not sharing a birthday with the previous 24 people, assuming they all had distinct birthdays.  So the total probability is
+
+$$\begin{align}
+P(unique) &= \frac{364}{365} \times \frac{363}{365} \times \cdots \times \frac{342}{365} \times \frac{341}{365} \\ \\
+          &= \frac{364 \times 363 \times \cdots \times 342 \times 341}{365^{24}} \\
+          &\approx 0.4313 \\ \\ \\
+P(shared) &= 1 - P(unique) = 0.5687
+\end{align}$$
+
+#### Larger Population
+
+The probability of a shared birthday between $n$ people can be generalized as
+$$P(shared)_n = 1 - \frac{364 \times \cdots \times (364 - n + 2)}{365^{n - 1}}$$
+
+Coded into an R function,
+```{r birthday}
+same_bday <- function(n) {
+  unique <- prod(364:(364 - n + 2)) / (365 ^ (n - 1))
+  1 - unique
+}
+```
+
+For 50 people, the chance of at least one shared birthday is $P(shared)_{50} = `r round(same_bday(50), 4)`$.
+
+
+## Problem Set 2
+
+### One-Word Probability
+```{r word-prob}
+word_prob <- function(flnm, ranked = FALSE, printAllWords = FALSE, returnTable = FALSE) {
+  library(stringr)
+  # read in file
+  body <- read.delim(flnm, header = FALSE, stringsAsFactors = FALSE)
+  # collapse and convert to lowercase
+  body <- str_to_lower(paste(body, collapse = ' '))
+  # remove anything that isnt a space or lowercase letter
+  body <- str_replace_all(body, '[^[:lower:]^ ]', '')
+  # convert to vector
+  word_vec <- str_split(body, ' ')[[1]]
+  # get count of words and convert to probability
+  word_table <- as.data.frame(table(word_vec)[-1], stringsAsFactors = FALSE) #remove count of spaces
+  suppressPackageStartupMessages(library(dplyr))
+  word_table <- word_table %>% transmute(Word = word_vec, Probability = Freq / sum(Freq))
+  if(ranked) {
+    word_table <- arrange(word_table, desc(Probability))
+  }
+  print(head(word_table, ifelse(printAllWords, nrow(word_table), 10)))
+  if(returnTable){return(word_table)}
+}
+```
+
+```{r test-data}
+word_prob('data/assign6.sample.txt', ranked = TRUE)
+```
+
+### Two-Word Probability
+```{r two-words}
+phrase_prob <- function(flnm, word1, word2) {
+  # adapt previous function
+  library(stringr)
+  body <- read.delim(flnm, header = FALSE, stringsAsFactors = FALSE)
+  body <- str_to_lower(paste(body, collapse = ' '))
+  body <- str_replace_all(body, '[^[:lower:]^ ]', '')
+  word_vec <- str_split(body, ' ')[[1]]
+  word_table <- as.data.frame(table(word_vec)[-1], stringsAsFactors = FALSE)
+  suppressPackageStartupMessages(library(dplyr))
+  word_table <- word_table %>% transmute(Word = word_vec, Probability = Freq / sum(Freq))
+  # get individual word probabilities
+  prob_1 <- word_table[word_table$Word == word1, 2]
+  prob_2 <- word_table[word_table$Word == word2, 2]
+  # find count of words appearing together
+  phrase_count <- str_count(body, paste(word1, word2)) + str_count(body, paste(word2, word1))
+  # divide by the number of possible phrases -- 1 fewer than the number of words
+  prob_phrase <- phrase_count[1] / (length(word_vec) - 1)
+  probs <- data.frame(Term = c(word1, word2, paste0(paste(word1, word2), ";", paste(word2, word1))), 
+                      Probability = c(prob_1, prob_2, prob_phrase), stringsAsFactors = FALSE)
+  probs
+}
+```
+
+```{r test-phrase}
+phrase_prob('data/assign6.sample.txt', 'the', 'federal')
+```
