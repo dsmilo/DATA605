@@ -1,0 +1,93 @@
+---
+title: 'DATA 605 Assignment 7: Expectation & Conditional Probability'
+author: "Dan Smilowitz"
+date: "October 9, 2016"
+output: 
+  html_document: 
+    highlight: tango
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA)
+```
+
+
+## Problem Set 1
+
+### Given Array
+The function below takes an vector and returns its expected value and standard deviation.
+```{r exp-std}
+sum_stats <- function(input) {
+  # get unique values in vector and count, convert to number
+  input_tbl <- as.data.frame(table(input))
+  names(input_tbl)[1] <- "x"
+  input_tbl$x <- as.numeric(as.character(input_tbl$x))
+  # get probability for each value of x
+  input_tbl$p <- input_tbl$Freq / sum(input_tbl$Freq)
+  #return E(X) & sd(X)
+  E_x <- sum(input_tbl$x * input_tbl$p)
+  var_x <- sum(input_tbl$x * input_tbl$x * input_tbl$p) - E_x^2
+  c("E(x)" = E_x, "sd(x)" = sqrt(var_x), "N" = length(input))
+}
+```
+
+Testing with an array and comparing to the builtin `mean` and `sd` functions:
+```{r test-sum}
+set.seed(42)
+a <- round(runif(n = 100, min = 0, max = 20))
+sum_stats(a)
+c("mean" = mean(a), "sd" = sd(a))
+```
+
+The expected value calculated is equivalent to the mean.  The standard deviation differs by a small amount.  Investigation reveals that the `sd` function calculates the *sample* standard deviation -- that is, it divides by $\sqrt{n-1}$ in the denominator.  Adjusting this to calculate the population standard deviation (i.e. dividing by $\sqrt{n}$) returns the same value as the designed function:
+```{r pop-sd}
+(pop_sd <- sd(a) * sqrt(length(a) - 1) / sqrt(length(a)))
+round(pop_sd, 6) == round(sum_stats(a)[[2]], 6)
+```
+
+### Stream of Values
+In order to calculate the exected value and standard deviation of a stream of values, running values for these figures are tracked and updated as additional data is added.  Each time a new array of data $Y$ is added to the existing data $X$, the expected value and variance of the combined data are calculated by
+$$\begin{array}
+E(X \cup Y)   &= \frac{N_X E(X) + N_Y E(Y)}{N_X + N_Y} \\
+Var(X \cup Y) &= \frac{N_X Var(X) + N_Y Var(Y) + N_X (E(X) - E(X \cup Y))^2 + N_Y (E(Y) - E(X \cup Y))^2}{N_X + N_Y}
+\end{array}$$
+
+```{r stream}
+running_stats <- function(newinput) {
+  #read in existing stats; 0 if not defined
+  E_X <- ifelse(exists('E'), E, 0)
+  var_X <- ifelse(exists('SD'), SD^2, 0)
+  N_X <- ifelse(exists('N'), N, 0)
+  
+  #get figures for new array
+  E_Y <- sum_stats(newinput)[[1]]
+  var_Y <- sum_stats(newinput)[[2]]^2
+  N_Y  <- sum_stats(newinput)[[3]]
+  
+  #calculate & store new stats
+  E_tot <- (N_X * E_X + N_Y * E_Y) / (N_X + N_Y)
+  var_tot <- (N_X * var_X + N_Y * var_Y + N_X * (E_X - E_tot)^2 + N_Y * (E_Y - E_tot)^2) / (N_X + N_Y)
+  E <<- E_tot
+  SD <<- sqrt(var_tot)
+  N <<- N_X + N_Y
+  
+  #return values
+  c("E" = E, "SD" = SD, "N" = N)
+}
+```
+
+This can be testing using the previous vector `a` and a new vector `b`.
+```{r test-running}
+set.seed(24)
+b <- round(runif(n = 20, min = 0, max = 20))
+running_stats(a)
+running_stats(b)
+```
+
+The values returned can be seen to be equivalent to both the `sum_stats` function of the joined arrays, as well as the calculation of the build-in `mean` and `sd` (for population) functions on the joined arrays.
+```{r equiv}
+sum_stats(c(a, b))
+mean(c(a, b))
+sd(c(a, b)) * sqrt(length(c(a, b)) - 1) / sqrt(length(c(a, b)))
+```

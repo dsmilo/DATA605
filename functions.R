@@ -166,3 +166,43 @@ phrase_prob <- function(flnm, word1, word2) {
                       Probability = c(prob_1, prob_2, prob_phrase), stringsAsFactors = FALSE)
   probs
 }
+
+
+
+## Assignment 7 ####
+## Expectation & Variance
+sum_stats <- function(input) {
+  # get unique values in vector and count, convert to number
+  input_tbl <- as.data.frame(table(input))
+  names(input_tbl)[1] <- "x"
+  input_tbl$x <- as.numeric(as.character(input_tbl$x))
+  # get probability for each value of x
+  input_tbl$p <- input_tbl$Freq / sum(input_tbl$Freq)
+  #return E(X) & sd(X)
+  E_x <- sum(input_tbl$x * input_tbl$p)
+  var_x <- sum(input_tbl$x * input_tbl$x * input_tbl$p) - E_x^2
+  c("E(x)" = E_x, "sd(x)" = sqrt(var_x), "N" = length(input))
+}
+
+## running statistics
+running_stats <- function(newinput) {
+  #read in existing stats; 0 if not defined
+  E_X <- ifelse(exists('E'), E, 0)
+  var_X <- ifelse(exists('SD'), SD^2, 0)
+  N_X <- ifelse(exists('N'), N, 0)
+  
+  #get figures for new array
+  E_Y <- sum_stats(newinput)[[1]]
+  var_Y <- sum_stats(newinput)[[2]]^2
+  N_Y  <- sum_stats(newinput)[[3]]
+  
+  #calculate & store new stats
+  E_tot <- (N_X * E_X + N_Y * E_Y) / (N_X + N_Y)
+  var_tot <- (N_X * var_X + N_Y * var_Y + N_X * (E_X - E_tot)^2 + N_Y * (E_Y - E_tot)^2) / (N_X + N_Y)
+  E <<- E_tot
+  SD <<- sqrt(var_tot)
+  N <<- N_X + N_Y
+  
+  #return values
+  c("E" = E, "SD" = SD, "N" = N)
+}
