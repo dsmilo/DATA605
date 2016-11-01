@@ -1,0 +1,104 @@
+---
+title: 'DATA 605 Assignment 9: Central Limit Theorem'
+author: "Dan Smilowitz"
+date: "October 27, 2016"
+output: 
+  html_document: 
+    highlight: tango
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA, fig.align = 'center')
+```
+
+
+## Sampling Functions
+
+### Equation 1
+$$\begin{align}
+&f(x) = x&,\  0 \leq x \leq 1 \\
+&f(x) = 2 - x&,\  1 \lt x \leq 2
+\end{align}$$
+
+This equation represents a triangular function from 0 to 2, with a maximum at 1, as shown below.
+```{r plot-f1, echo=FALSE}
+x1 <- seq(0, 1, 0.01); x2 <- seq(1, 2, 0.01)
+y1 <- x1; y2 <- 2 - x2
+x <- c(x1, x2)
+y <- c(y1, y2)
+plot(x, y, 'l', main = NULL)
+```
+
+This can be sampled from using the `triangle` package:
+```{r sample-f1}
+library(triangle)
+sample_f1 <- function(N) {
+  f1_samp <- rtriangle(N, a = 0, b = 2)
+  f1_samp
+}
+```
+
+### Equation 2
+$$\begin{align}
+&f(x) = 1 - x&,\  0 \leq x \leq 1 \\
+&f(x) = x - 1&,\  1 \lt x \leq 2
+\end{align}$$
+
+This equation represents two triangular distributions, as shown below:
+
+```{r plot-f2, echo=FALSE}
+y1 <- 1 - x1; y2 <- x2 - 1
+y <- c(y1, y2)
+plot(x, y, 'l', main = NULL)
+```
+
+To sample the two triangular distributions, each is sampled, the two samples are combined.
+```{r sample-f2}
+sample_f2 <- function(N) {
+  f2_samp_lower <- rtriangle(N/2, a = 0, b = 1, c = 0)
+  f2_samp_upper <- rtriangle(N/2, a = 1, b = 2, c = 2)
+  f2_samp = c(f2_samp_lower, f2_samp_upper)
+  f2_samp
+}
+```
+
+## Drawing Samples
+Each of the samples is drawn 1000 times, and the histograms of the values in the sample are plotted in a histogram:
+
+```{r sample-1000, fig.width=8}
+my_f1 <- sample_f1(1000)
+my_f2 <- sample_f2(1000)
+par(mfrow = c(1, 2))
+hist(my_f1, main = 'Sample from Equation 1')
+hist(my_f2, main = 'Sample from Equation 2')
+```
+
+The resulting histograms roughly map the shape of the plots shown above.
+
+## $n$ Samples
+The function below performs $n$ samples of 1000 iterations from a distribution and returns plots a histograms of the $n$ sample means.
+```{r sample-means}
+central_limit <- function(n, PDF) {
+  xbar <- NULL
+  for (i in 1:n) {
+    samp <- do.call(PDF, list(1000))
+    xbar <- c(xbar, mean(samp))
+  }
+  plot_title <- paste(n, 'samples:', as.character(substitute(PDF)))
+  hist(xbar, xlab = NULL, ylab = NULL, main = plot_title)
+}
+```
+
+## Visualizing Central Limit Theorem
+Sampling each distribution 5, 10, 20, 100, and 500 times produces the following results:
+```{r CLT, fig.height=10, fig.width=8}
+ns <- c(5, 10, 20, 100, 500)
+par(mfrow = c(5, 2), mar = c(3,3,3,3))
+for (i in 1:5) {
+  central_limit(ns[i], sample_f1)
+  central_limit(ns[i], sample_f2)
+}
+```
+
+The plots above show that as the number of samples drawn increases, the sample means approaches a random distribution centered near the center of the PDF from which they are sampling.

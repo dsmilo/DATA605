@@ -1,0 +1,85 @@
+---
+title: 'DATA 605 Assignment 8: Bayes Theorem'
+author: "Dan Smilowitz"
+date: "October 17, 2016"
+output: 
+  html_document: 
+    highlight: tango
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA, fig.align = 'center')
+```
+
+
+## Problem Set 1
+
+Substituting into Bayes' Rule using for the probability that the colleague took the bus ($x = b$) and was on time ($e = ot$),
+
+$$\begin{align}
+P(X = b|ot) &= \frac{P(ot|X=b) \times P(X=b)}{P(ot|X=b) \times P(X=b) + P(ot|X \neq b) \times P(X \neq b)} \\
+            &= \frac{0.5 \times \frac{10}{30}}{0.5 \times \frac{10}{30} + 0.9 \times \frac{20}{30}} \\
+            &= `r round((0.5 * 10/30) / (0.5 * 10/30 + 0.9 * 20/30), 4)`
+\end{align}$$
+
+
+## Problem Set 2
+
+The network is first built using the `gRain` package:
+```{r gRain}
+library(gRain)
+ny <- c('N', 'Y')
+lh <- c('L', 'H')
+D <- cptable(~difficulty, values = c(0.3, 0.7), levels = ny)
+I <- cptable(~intelligence, values = c(0.8, 0.2), levels = lh)
+S.I <- cptable(~sat|intelligence, values = c(0.9, 0.1, 0.2, 0.8), levels = lh)
+G.DI <- cptable(~grade|intelligence:difficulty, values = c(0.6, 0.4, 0.01, 0.99, 0.8, 0.2, 0.1, 0.9), levels = lh)
+L.G <- cptable(~letter|grade, values = c(0.9, 0.1, 0.05, 0.95), levels = lh)
+plist <- compileCPT(list(D, I, S.I, G.DI, L.G))
+grade_net <- grain(plist)
+```
+
+```{r diagram, echo=FALSE, fig.width=8, fig.height=6}
+library(Rgraphviz)
+nw <- plot(grain(plist))
+# add probability tables
+library(plotrix)
+# D
+tmptbl <- t(as.matrix(plist$difficulty))
+colnames(tmptbl) <- c('D=N', 'D=Y')
+addtable2plot(nw@AgNode[[1]]@center@x + 35, nw@AgNode[[1]]@center@y, table = tmptbl,
+              xjust = 0, yjust = 0.5, display.rownames = FALSE, display.colnames = TRUE)
+# I
+tmptbl <- t(as.matrix(plist$intelligence))
+colnames(tmptbl) <- c('I=L', 'I=H')
+addtable2plot(nw@AgNode[[2]]@center@x + 35, nw@AgNode[[2]]@center@y, table = tmptbl,
+              xjust = 0, yjust = 0.5, display.rownames = FALSE, display.colnames = TRUE)
+# S
+tmptbl <- t(as.matrix(plist$sat))
+colnames(tmptbl) <- c('S=L', 'S=H')
+rownames(tmptbl) <- c('I=L', 'I=H')
+addtable2plot(nw@AgNode[[3]]@center@x + 35, nw@AgNode[[3]]@center@y, table = tmptbl,
+              xjust = 0, yjust = 0.5, display.rownames = TRUE, display.colnames = TRUE)
+# G
+tmptbl <- matrix(plist$grade, ncol = 2, byrow = TRUE)
+colnames(tmptbl) <- c('G=L', 'G=H')
+rownames(tmptbl) <- c('D=N,I=L', 'D=N,I=H', 'D=Y,I=L', 'D=Y,I=H')
+addtable2plot(nw@AgNode[[4]]@center@x + 35, nw@AgNode[[4]]@center@y - 15, table = tmptbl,
+              xjust = 0, yjust = 0.5, display.rownames = TRUE, display.colnames = TRUE)
+# L
+tmptbl <- t(as.matrix(plist$letter))
+colnames(tmptbl) <- c('L=L', 'L=H')
+rownames(tmptbl) <- c('G=L', 'G=H')
+addtable2plot(nw@AgNode[[5]]@center@x + 35, nw@AgNode[[5]]@center@y, table = tmptbl,
+              xjust = 0, yjust = 0.5, display.rownames = TRUE, display.colnames = TRUE)
+```
+
+Evidence is then entered, and the probabilities Difficulty of Course are returned.
+```{r evidence}
+grade_net.letter <- setEvidence(grade_net, evidence = list(letter = 'H'))
+querygrain(grade_net.letter, nodes = "difficulty")[[1]]
+
+grade_net.letter.sat <- setEvidence(grade_net, evidence = list(letter = 'H', sat = 'H'))
+querygrain(grade_net.letter.sat, nodes = "difficulty")[[1]]
+```

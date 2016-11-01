@@ -206,3 +206,35 @@ running_stats <- function(newinput) {
   #return values
   c("E" = E, "SD" = SD, "N" = N)
 }
+
+
+
+## Assignment 9 ####
+## Central Limit Theorem
+central_limit <- function(n, PDF) {
+  xbar <- NULL
+  for (i in 1:n) {
+    samp <- do.call(PDF, list(1000))
+    xbar <- c(xbar, mean(samp))
+  }
+  plot_title <- paste(n, 'samples:', as.character(substitute(PDF)))
+  hist(xbar, xlab = NULL, ylab = NULL, main = plot_title)
+}
+
+
+
+## Assignment 10 ####
+## PageRank Power Iteration
+power_iterate <- function(mat, vec) {
+  converged <- FALSE
+  n <- 0
+  while(!converged) {
+    vec <- crossprod(mat, vec)
+    n <- n + 1
+    if(identical(crossprod(mat, vec), vec)) {
+      converged <- TRUE
+    }
+  }
+  print(paste('Converged in', n, 'iterations'))
+  return(vec)
+}
