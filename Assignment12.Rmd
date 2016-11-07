@@ -1,0 +1,46 @@
+---
+title: 'DATA 605 Assignment 12: Bias-Variance Tradeoff'
+author: "Dan Smilowitz"
+date: "November 5, 2016"
+output: 
+  html_document: 
+    highlight: tango
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA, fig.align = 'center')
+library(ggplot2)
+library(boot)
+```
+
+
+
+```{r load-data}
+auto <- read.table('data/auto-mpg.data')
+names(auto) <- c('displacement', 'horsepower', 'weight', 'acceleration', 'mpg')
+```
+
+Fits between `mpg` and the remaining four variables (`displacement`, `horsepower`, `weight`, and `acceleration`) are created with degrees varying between 1 and 8:
+
+```{r glm}
+bias_var <- data.frame(N = rep(NA, 8), Error = rep(NA, 8))
+
+set.seed(46) # set seed for replicable results
+
+for (n in 1:8) {
+  polyfit <- glm(mpg ~ poly(displacement + horsepower + weight + acceleration, n), data = auto)
+  bias_var$N[n] <- n
+  bias_var$Error[n] <- cv.glm(auto, polyfit, K = 5)$delta[1]
+}
+```
+
+The plot below illustrates how the mean cross-validation error against the degree of the polynomial fit to the data.  While there is a slight unexpected bump at N=6, the characteristic U-shaped curve can be seen.  The lowest error occurs at N=2.
+
+```{r plot, echo=FALSE}
+# add distinguisher for lowest point
+bias_var$ismin <- rep(FALSE, 8)
+bias_var$ismin[which.min(bias_var$Error)] <- TRUE
+ggplot(bias_var, aes(N, Error)) + ggtitle('Bias-Variance Tradeoff') + 
+  geom_line() + geom_point(aes(col=ismin), show.legend = FALSE, size=3)
+```

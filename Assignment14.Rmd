@@ -1,0 +1,161 @@
+---
+title: "DATA 605 Assignment 14: Taylor Series"
+author: "Dan Smilowitz"
+date: "November 6, 2016"
+output: 
+  html_document: 
+    highlight: tango
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = NA, fig.align = 'center')
+library(ggplot2)
+```
+
+$$f(x) \approx \sum_{n=0}^{\infty} \frac{f^{(n)} (a)}{n!} (x-a)^n$$
+
+
+## Equation 1
+
+### Derivation
+
+The first three derivatives for $f(x) = \frac{1}{1-x}$ are
+$$f'(x) = \frac{1}{(1-x)^2} \\
+f''(x) = \frac{2}{(1-x)^3} \\
+f'''(x) = \frac{6}{(1-x)^4}$$
+
+This can be generalized as
+$$f^{(n)}(x) = \frac{n!}{(1-x)^{n+1}}$$
+
+Substituting this into the general equation,
+$$\frac{1}{1-x} \approx \sum_{n=0}^{\infty} \frac{n!}{(1-a)^{n+1}} \times \frac{(x-a)^n}{n!} = \frac{(x-a)^n}{(1-a)^n}$$
+
+At $a=0$, this becomes
+$$\frac{1}{1-x} \approx \sum_{n=0}^{\infty} x^n$$
+
+#### Convergence
+Using the ratio series for infinite series:
+$$\frac{A_{n+1}}{A_n} = \frac{x^{n+1}}{x^n} = x \\
+\lim_{n \to \infty} x = x$$
+
+So the series converges for $|x| < 1$.
+
+### Validation
+The true values and series approximations are plotted for $n=25$:
+```{r test-1}
+taylor1 <- function(x, n) {
+  sum <- 0
+  for(i in 0:n) {
+    sum <- sum + x^i
+  }
+  sum
+}
+```
+
+```{r plot-1, echo=FALSE}
+x1 <- seq(-0.99, 0.99, 0.01)
+test1 <- data.frame(x = rep(x1, 2), y = c(1 / (1 - x1), taylor1(x1, 25)),
+                    Type = c(rep('Equation', length(x1)), rep('Series', length(x1))))
+
+ggplot(test1, aes(x, y, col = Type)) + geom_line() + scale_color_discrete('') +
+  theme(legend.position='bottom') + ggtitle('Series Approximation for 1/(1-x)')
+```
+
+It can be seen in the plot above that there is some divergence between the function and its Taylor series approximation at the edges of the range (-1, 1).
+
+
+
+## Equation 2
+
+### Derivation
+
+The derivative of $f(x) = e^x$ is $e^x$, so any derivative $f^{(n)}(x) = e^x$.
+
+Substituting this into the general equation,
+
+$$e^x \approx \sum_{n=0}^{\infty} e^x \times \frac{(x-a)^n}{n!} = \frac{e^x (x-a)^n}{n! (1-a)^n}$$
+
+At $a=0$, this becomes
+$$\frac{1}{1-x} \approx \sum_{n=0}^{\infty} \frac{x^n}{n!}$$
+
+#### Convergence
+Using the ratio series for infinite series:
+$$\frac{A_{n+1}}{A_n} = \frac{x^{n+1}}{(n+1)!} \frac{n!}{x^n} = \frac{x}{n+1} \\
+\lim_{n \to \infty} \frac{x}{n+1} = 0$$
+
+So the series converges for all values of x.
+
+### Validation
+The true values and series approximations are plotted for $n=25$:
+```{r test-2}
+taylor2 <- function(x, n) {
+  sum <- 0
+  for(i in 0:n) {
+    sum <- sum + x^i / factorial(i)
+  }
+  sum
+}
+```
+
+```{r plot-2, echo=FALSE}
+x2 <- seq(-5, 5, 0.05)
+test2 <- data.frame(x = rep(x2, 2), y = c(exp(x2), taylor2(x2, 25)),
+                    Type = c(rep('Equation', length(x2)), rep('Series', length(x2))))
+
+ggplot(test2, aes(x, y, col = Type)) + geom_line() + scale_color_discrete('') +
+  theme(legend.position='bottom') + ggtitle('Series Approximation for e^x')
+```
+
+It can be seen in the plot above that the function and its taylor series approximation entirely overlap.
+
+
+
+## Equation 3
+
+### Derivation
+
+The first four derivatives for $f(x) = \ln(x)$ are
+$$f^{(1)}(x) = \frac{1}{1+x} \\
+f^{(2)}(x) = \frac{-1}{(1+x)^2} \\
+f^{(3)}(x) = \frac{2}{(1+x)^3} \\
+f^{(4)}(x) = \frac{-6}{(1+x)^4}$$
+
+This can be generalized as
+$$f^{(n)}(x) = (-1)^{n-1} \frac{(n-1)!}{(1+x)^{n}}$$
+
+Substituting this into the general equation,
+$$\ln(1+x) \approx \sum_{n=0}^{\infty} (-1)^{n-1} \frac{(n-1)!}{(1+a)^{n}} \times \frac{(x-a)^n}{n!} = (-1)^{n-1} \frac{(x-a)^n}{n (1+a)^n}$$
+
+At $a=0$, this becomes
+$$\ln(1+x) \approx \sum_{n=0}^{\infty} (-1)^{n-1} \frac{x^n}{n}$$
+
+#### Convergence
+Using the ratio series for infinite series:
+$$\frac{A_{n+1}}{A_n} = - \frac{x^{n+1}}{n} \frac{n}{x^n} = - \frac{-xn}{n+1} \\
+\lim_{n \to \infty} \frac{-xn}{n+1} = -x$$
+
+So the series converges for $|x| < 1$.
+
+### Validation
+The true values and series approximations are plotted for $n=25$:
+```{r test-3}
+taylor3 <- function(x, n) {
+  sum <- 0
+  for(i in 1:n) { # starting at n=1 since n=0 causes Inf
+    sum <- sum + (-1)^(i + 1) * x^i / i
+  }
+  sum
+}
+```
+
+```{r plot-3, echo=FALSE}
+x3 <- seq(-0.99, 0.99, 0.01)
+test3 <- data.frame(x = rep(x3, 2), y = c(log(1 + x3), taylor3(x3, 25)),
+                    Type = c(rep('Equation', length(x3)), rep('Series', length(x3))))
+
+ggplot(test3, aes(x, y, col = Type)) + geom_line() + scale_color_discrete('') +
+  theme(legend.position='bottom') + ggtitle('Series Approximation for ln(1+x)')
+```
+
+As in the first plot, there is some divergence between the function and its Taylor series approximation at the lower edge of the valid range near -1.

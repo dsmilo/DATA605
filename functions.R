@@ -238,3 +238,33 @@ power_iterate <- function(mat, vec) {
   print(paste('Converged in', n, 'iterations'))
   return(vec)
 }
+
+
+
+## Assignment 14 ####
+## Taylor Series Approximation of 1/(1-x)
+taylor1 <- function(x, n) {
+  sum <- 0
+  for(i in 0:n) {
+    sum <- sum + x^i
+  }
+  sum
+}
+
+## Taylor Series Approximation of e^x
+taylor2 <- function(x, n) {
+  sum <- 0
+  for(i in 0:n) {
+    sum <- sum + x^i / factorial(i)
+  }
+  sum
+}
+
+## Taylor Series Approximation of ln(1+x)
+taylor3 <- function(x, n) {
+  sum <- 0
+  for(i in 1:n) { # starting at n=1 since n=0 causes Inf
+    sum <- sum + (-1)^(i + 1) * x^i / i
+  }
+  sum
+}
